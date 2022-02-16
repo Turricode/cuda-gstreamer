@@ -7,3 +7,5 @@ add_library(cuda_gstreamer SHARED library.cu)
 
 set_target_properties(cuda_gstreamer PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
+
+target_link_libraries(cuda_gstreamer PUBLIC cuda)
