@@ -2,8 +2,16 @@
 
 #include <stdio.h>
 
-#define BOX_WIDTH 32
-#define BOX_HEIGHT 32
+/*
+ *  total_width = 1920 / 2 = 960
+ *  total_height = 1080 / 2 = 540
+ *
+ *  block_x_count = 960 / 30 = 32
+ *  block_y_count = 540 / 30 = 18
+ * */
+
+#define BOX_WIDTH 30
+#define BOX_HEIGHT 30
 
 void preprocess(void **sBaseAddr,
                 unsigned int *smemsize,
@@ -34,15 +42,15 @@ __global__ void addLabelsKernel(int* pDevPtr, int pitch){
     int row = blockIdx.y*blockDim.y + threadIdx.y;
     int col = blockIdx.x*blockDim.x + threadIdx.x;
     char * pElement = (char*)pDevPtr + row * pitch + col * 2;
-    pElement[0] = 0;
-    pElement[1] = 0;
+    pElement[0] = (char)abs(0xff - pElement[0]);
+    pElement[1] = (char)abs(0xff - pElement[1]);
     return;
 }
 
 static int add_labels(CUdevice *p_dev_ptr, int pitch){
 
     dim3 threadsPerBlock(BOX_WIDTH, BOX_HEIGHT);
-    dim3 blocks(3,3);
+    dim3 blocks(32,18);
     addLabelsKernel<<<blocks,threadsPerBlock>>>((int*)p_dev_ptr, pitch);
     return 0;
 
@@ -82,7 +90,7 @@ void gpu_process(EGLImageKHR image, void ** userPtr){
 //        } else
 //            printf ("Invalid eglcolorformat\n");
 //    }
-    add_labels((CUdevice *) eglFrame.frame.pPitch[0], eglFrame.pitch);
+    add_labels((CUdevice *) eglFrame.frame.pPitch[1], eglFrame.pitch);
 
     status = cuCtxSynchronize();
     status = cuGraphicsUnregisterResource(pResource);
